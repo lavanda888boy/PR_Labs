@@ -72,7 +72,7 @@ class PlayerFactory:
  
         return ET.tostring(player_config)
 
-    '''
+    
     def json_to_xml(self, list_of_dicts):
         list_of_players = list()
         for json_player in list_of_dicts:
@@ -116,8 +116,18 @@ class PlayerFactory:
             player = Player(nickname, email, date_of_birth, xp, player_class)
             deserialized_players.append(player)
 
-        # TODO : finish 
-    '''
+            serialized_players = list()
+            for player in deserialized_players:
+                serialized_players.append({
+                    "nickname": player.nickname,
+                    "email": player.email,
+                    "date_of_birth": player.date_of_birth.strftime("%Y-%m-%d"),
+                    "xp": player.xp,
+                    "class": player.cls
+                })
+        
+        return serialized_players
+    
 
     def from_protobuf(self, binary):
         list_of_players = player_proto.PlayersList()
@@ -125,18 +135,8 @@ class PlayerFactory:
         
         p_list = []
         for player in list_of_players.player:
-            cls = ''
-            if player.cls == 0:
-                cls = 'Berserk'
-            elif player.cls == 1:
-                cls = 'Tank'
-            elif player.cls == 3:
-                cls = 'Paladin'
-            else:
-                cls = 'Mage'
-
             p = Player(player.nickname, player.email, player.date_of_birth,
-                       player.xp, cls)
+                       player.xp, player_proto.Class.Name(player.cls))
             
             p_list.append(p)
 
