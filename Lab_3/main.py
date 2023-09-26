@@ -1,6 +1,10 @@
 import requests
 from bs4 import BeautifulSoup
 import re
+import os
+import json
+
+from homework import *
 
 def scanPages(url: str, init_num: int, page_num: int, urls: [], max_num_pages=None):
     response = requests.get(url)
@@ -18,7 +22,7 @@ def scanPages(url: str, init_num: int, page_num: int, urls: [], max_num_pages=No
 
         if nextPageUrl == '':
             return urls
-
+        
         for link in links:
             if re.match(r"/ro/[0-9]+", link['href']) and link['href'] not in advertisements:
                 advertisements.add('https://999.md' + link['href'])
@@ -43,7 +47,7 @@ def main():
     site_url = 'https://999.md/ro/list/real-estate/apartments-and-rooms?applied=1&eo=12900&eo=12912&eo=12885&eo=13859&ef=32&ef=33&o_33_1=776&page=10'
     list_of_urls = []
     
-    p_n = 1
+    p_n = 0
     i_n = 0
     if 'page' in site_url:
         p = re.split(r"&(page=[0-9]+)", site_url)[1]
@@ -53,13 +57,23 @@ def main():
         p_n = 1
         i_n = p_n
        
-    scanPages(site_url, i_n, p_n, list_of_urls, max_num_pages=2)
+    scanPages(site_url, i_n, p_n, list_of_urls, max_num_pages=1)
 
-    page = p_n
-    for url_set in list_of_urls:
-        print(page)
-        print(url_set)
-        page += 1
-        print()
+    option = 'x'
+    if os.path.exists('Lab_3/apartments.json'):
+        option = 'w'
 
-main()
+    apart_json = {}
+    list_of_apartments = []
+    for page_set in list_of_urls:
+        for apartment_url in page_set:
+            list_of_apartments.append(scanAdvertisement(apartment_url))
+
+    apart_json['apartments'] = list_of_apartments
+
+    with open('Lab_3/apartments.json', option) as apart:
+        apart.write(json.dumps(apart_json, ensure_ascii=False, indent=4))
+
+
+if __name__ == '__main__':
+    main()
