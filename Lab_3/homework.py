@@ -10,13 +10,21 @@ def scanAdvertisement(url: str):
         parser = BeautifulSoup(response.content, features='lxml')
         parser.prettify()
 
-        links = parser.find_all('div', class_='adPage__content__features__col')
-        general_info = {}
-        particularities = {}
+        caracteristics = {}
+        additional = {}
 
-        details_parser = BeautifulSoup(str(links), features='lxml')
-        for header in details_parser.find_all('h2'):
-            advertisement_data[header.contents[0]] = {}
+        div = parser.find('div', class_='adPage__content__features')
+        list_of_caracteristics = div.findChild('ul')
+        
+        for child in list_of_caracteristics.findChildren('li'):
+            values = child.findChildren('span')
+            caracteristics[values[0].contents[0].strip()] = values[1].contents[0].strip()
+
+        details_parser = BeautifulSoup(str(div), features='lxml')
+        headers = details_parser.find_all('h2')
+        advertisement_data[headers[0].contents[0]] = caracteristics
+        advertisement_data[headers[1].contents[0]] = additional
+        
     else:
         print(f"Request failed: {response.status_code}")
 
@@ -24,7 +32,7 @@ def scanAdvertisement(url: str):
 
 
 def main():
-    site_url = 'https://999.md/ro/84284036'
+    site_url = 'https://999.md/ro/83487066'
     json_data = scanAdvertisement(site_url)
     print(json_data)
 
