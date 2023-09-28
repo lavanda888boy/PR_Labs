@@ -2,6 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 
 def scanAdvertisement(url: str):
+    print(f'Processing url: {url}')
     response = requests.get(url)
     if response.status_code == 200:
         advertisement_data = {}

@@ -58,7 +58,7 @@ def main():
         i_n = p_n
        
     scanPages(site_url, i_n, p_n, list_of_urls, max_num_pages=1)
-
+    '''
     option = 'x'
     if os.path.exists('Lab_3/apartments.json'):
         option = 'w'
@@ -73,6 +73,19 @@ def main():
 
     with open('Lab_3/apartments.json', option) as apart:
         apart.write(json.dumps(apart_json, ensure_ascii=False, indent=4))
+    '''
+
+    option = 'x'
+    if os.path.exists('Lab_3/links.txt'):
+        option = 'w'
+
+    with open('Lab_3/links.txt', option) as links:
+        for url_set in list_of_urls:
+            links.write(f'Page {i_n}\n')
+            for url in url_set:
+                links.write(url + '\n')
+            links.write('\n\n\n')
+            i_n += 1
 
 
 if __name__ == '__main__':
