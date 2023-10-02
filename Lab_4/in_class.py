@@ -41,15 +41,13 @@ def handle_request(server, list_of_products):
             response_content += f"<a href='/product/{product['id']}'> Product {product['name']} </a><br>"
     elif re.match(r"/product/[0-9]+", path):
         id = int(re.split(r"/", path)[2])
-        check = 0
         p = {}
         for product in list_of_products:
             if int(product['id']) == id:
                 p = product
-                check += 1
                 break
         
-        if check != 0:
+        if p != None:
             response_content = f"""<p> ID : {p['id']} </p><br>""" +\
                                 f"""<p> Name : {p['name']} </p><br>""" +\
                                 f"""<p> Author : {p['author']} </p><br>""" +\
@@ -57,7 +55,7 @@ def handle_request(server, list_of_products):
                                 f"""<p> Description : {p['description']} </p><br>""" 
         else:
             response_content = '404 Product Not Found'
-        status_code = 404
+            status_code = 404
     else:
         response_content = '404 Not Found'
         status_code = 404
