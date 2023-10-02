@@ -12,8 +12,8 @@ server_socket.listen()
 print(f"Server is listening on {HOST}:{PORT}")
 
 
-def handle_request(client_socket, list_of_products):
-    request_data = client_socket.recv(1024).decode('utf-8')
+def handle_request(server, list_of_products):
+    request_data = server.recv(1024).decode('utf-8')
     print(f"Received Request:\n{request_data}")
 
     request_lines = request_data.split('\n')
@@ -63,9 +63,9 @@ def handle_request(client_socket, list_of_products):
         status_code = 404
 
     response = f'HTTP/1.1 {status_code} OK\nContent-Type: text/html\n\n{response_content}'
-    client_socket.send(response.encode('utf-8'))
+    server.send(response.encode('utf-8'))
 
-    client_socket.close()
+    server.close()
 
 
 def load_products():
@@ -80,10 +80,10 @@ def main():
     list_of_products = load_products()
 
     while True:
-        client_socket, client_address = server_socket.accept()
+        server, client_address = server_socket.accept()
         print(f"Accepted connection from {client_address[0]}:{client_address[1]}")
         try:
-            handle_request(client_socket, list_of_products)
+            handle_request(server, list_of_products)
         except KeyboardInterrupt:
             pass
 
