@@ -21,6 +21,8 @@ def handle_client(client_socket, client_address, clients):
         if not message:
             break
 
+        print(f'Received from {client_address}: {message}')
+
         data = json.loads(message)
         if data['type'] == 'connect':
             acknowledge_message = {
@@ -31,13 +33,11 @@ def handle_client(client_socket, client_address, clients):
                                 }
             server_data = json.dumps(acknowledge_message)
             client_socket.send(bytes(server_data, encoding='utf-8'))
-
-        print(f'Received from {client_address}: {message}')
-        '''
-        for client in clients:
-            if client != client_socket:
-                client.send(message.encode('utf-8'))
-        '''
+        
+        elif data['type'] == 'message':
+            for client in clients:
+                if client != client_socket:
+                    client.send(message.encode('utf-8'))
 
     clients.remove(client_socket)
     client_socket.close()
