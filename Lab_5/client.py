@@ -17,12 +17,12 @@ def perform_server_connection():
     room = input('Introduce the room you would like to join: ')
 
     connection_message = {
-                            "type": "connect",
-                            "payload": {
-                                "name": name,
-                                "room": room
-                            }
-                        }   
+                        "type": "connect",
+                        "payload": {
+                            "name": name,
+                            "room": room
+                        }
+                    }   
     
     data = json.dumps(connection_message)
     client_socket.sendall(bytes(data, encoding='utf-8'))
@@ -37,14 +37,12 @@ def receive_messages():
             break 
 
         data = json.loads(server_message)
-        if data['type'] == 'connect_ack':
+        if (data['type'] == 'connect_ack') or (data['type'] == 'notification'):
             print(data['payload']['message'])
         elif data['type'] == 'message':
             print(f"\nRoom: {data['payload']['room']}, {data['payload']['sender']}: {data['payload']['text']}")
-        elif data['type'] == 'notification':
-            pass
         else:
-            print(f'\nInvalid message received{data}')
+            print(f'\nInvalid message received: {data}')
 
 
 def main():
@@ -60,13 +58,13 @@ def main():
             break
 
         chat_message = {
-                            "type": "message",
-                            "payload": {
-                                "sender": name,
-                                "room": room,
-                                "text": message
-                                }
+                        "type": "message",
+                        "payload": {
+                            "sender": name,
+                            "room": room,
+                            "text": message
                         }
+                    }
         
         data = json.dumps(chat_message)
         client_socket.sendall(bytes(data, encoding='utf-8'))

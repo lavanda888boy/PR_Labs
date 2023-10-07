@@ -40,13 +40,29 @@ def handle_client(client_socket, client_address, clients, rooms):
 
             rooms[room].add(client_socket)
 
-        elif data['type'] == 'message':
-            for client in clients:
-                if client != client_socket:
-                    if check_common_room(client, client_socket, rooms):
-                        client.send(message.encode('utf-8'))
-                        break
+            notification_message = {
+                                    "type": "notification",
+                                    "payload": {
+                                        "message": f"\n{data['payload']['name']} has joined the room."
+                                    }
+                                }
+            server_data = json.dumps(notification_message)
+            send_broadcast_message(client_socket, clients, rooms, bytes(server_data, encoding='utf-8'))
 
+        elif data['type'] == 'message':
+            send_broadcast_message(client_socket, clients, rooms, message.encode('utf-8'))
+        else:
+            print(f'\nInvalid client message received: {data}')
+
+    notification_message = {
+                            "type": "notification",
+                            "payload": {
+                                "message": f"\n{data['payload']['name']} left the room."
+                            }
+                        }
+    server_data = json.dumps(notification_message)
+    send_broadcast_message(client_socket, clients, rooms, bytes(server_data, encoding='utf-8'))
+    
     clients.remove(client_socket)
 
     for room in rooms:
@@ -57,12 +73,13 @@ def handle_client(client_socket, client_address, clients, rooms):
     client_socket.close()
 
 
-def check_common_room(client1, client2, rooms):
-    for room in rooms:
-        if (client1 in rooms[room]) and (client2 in rooms[room]):
-            return True
-
-    return False
+def send_broadcast_message(client_socket, clients, rooms, data):
+    for client in clients:
+        if client != client_socket:
+            for room in rooms:
+                if (client in rooms[room]) and (client_socket in rooms[room]):
+                    client.sendall(data)
+                    break
 
 
 def main():
