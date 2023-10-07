@@ -15,6 +15,7 @@ print(f"Connected to {HOST}:{PORT}")
 def perform_server_connection():
     name = input('Introduce your name: ')
     room = input('Introduce the room you would like to join: ')
+
     connection_message = {
                             "type": "connect",
                             "payload": {
@@ -22,6 +23,7 @@ def perform_server_connection():
                                 "room": room
                             }
                         }   
+    
     data = json.dumps(connection_message)
     client_socket.sendall(bytes(data, encoding='utf-8'))
 
@@ -39,6 +41,10 @@ def receive_messages():
             print(data['payload']['message'])
         elif data['type'] == 'message':
             print(f"\nRoom: {data['payload']['room']}, {data['payload']['sender']}: {data['payload']['text']}")
+        elif data['type'] == 'notification':
+            pass
+        else:
+            print(f'\nInvalid message received{data}')
 
 
 def main():
@@ -61,8 +67,8 @@ def main():
                                 "text": message
                                 }
                         }
-        data = json.dumps(chat_message)
         
+        data = json.dumps(chat_message)
         client_socket.sendall(bytes(data, encoding='utf-8'))
 
     client_socket.close()
