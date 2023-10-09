@@ -28,7 +28,8 @@ def handle_client(client_socket, client_address, clients, rooms):
             acknowledge_message = {
                                     "type": "connect_ack",
                                     "payload": {
-                                        "message": f"\nYou succcesfully connected to the room '{data['payload']['room']}'."
+                                        "message": f"\nYou succcesfully connected to the room '{data['payload']['room']}'.\
+                                                    \nEnter your messages or type 'exit' to quit."
                                     }
                                 }
             server_data = json.dumps(acknowledge_message)

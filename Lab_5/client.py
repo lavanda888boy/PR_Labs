@@ -53,7 +53,7 @@ def main():
     receive_thread.start()
 
     while True:
-        message = input("Enter a message (or 'exit' to quit): ")
+        message = input()
         if message.lower() == 'exit':
             break
 
