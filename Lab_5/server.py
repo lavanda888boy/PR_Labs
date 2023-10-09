@@ -1,9 +1,12 @@
 import socket
 import threading
 import json
+import os
 
 HOST = '127.0.0.1' 
 PORT = 8080
+CHUNK = 1024
+MEDIA_FOLDER = 'server_media'
 
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -29,7 +32,9 @@ def handle_client(client_socket, client_address, clients, rooms):
                                     "type": "connect_ack",
                                     "payload": {
                                         "message": f"\nYou succcesfully connected to the room '{data['payload']['room']}'.\
-                                                    \nEnter your messages or type 'exit' to quit."
+                                                    \nEnter your messages or type 'exit' to quit.\
+                                                    \n\nType 'upload: <file-path>' to upload the file tot the server.\
+                                                    \nType 'download: <file-name.extension>' to download the file from the server.\n"
                                     }
                                 }
             server_data = json.dumps(acknowledge_message)
@@ -44,34 +49,59 @@ def handle_client(client_socket, client_address, clients, rooms):
             notification_message = {
                                     "type": "notification",
                                     "payload": {
-                                        "message": f"\n{data['payload']['name']} has joined the room."
+                                        "message": f"{data['payload']['name']} has joined the room.\n"
                                     }
                                 }
             server_data = json.dumps(notification_message)
             send_broadcast_message(client_socket, clients, rooms, bytes(server_data, encoding='utf-8'))
+        
+        elif data['type'] == 'disconnect':
+            notification_message = {
+                            "type": "notification",
+                            "payload": {
+                                "message": f"{data['payload']['name']} left the room.\n"
+                            }
+                        }
+            server_data = json.dumps(notification_message)
+            clients.remove(client_socket)
+            
+            if len(clients) != 0:
+                send_broadcast_message(client_socket, clients, rooms, bytes(server_data, encoding='utf-8'))
 
+            for room in rooms:
+                if room == data['payload']['room']:
+                    rooms[room].remove(client_socket)
+                    break
+
+            client_socket.close()
+            return
+        
+        elif data['type'] == 'upload':
+            if not os.path.isdir(MEDIA_FOLDER):
+                os.mkdir(MEDIA_FOLDER)
+            if not os.path.isdir(f"{MEDIA_FOLDER}/{data['payload']['room']}"):
+                os.mkdir(f"{MEDIA_FOLDER}/{data['payload']['room']}")
+            
+            option = 'w'
+            if not os.path.exists(f"{MEDIA_FOLDER}/{data['payload']['room']}/{data['payload']['file_name']}"):
+                option = 'x'
+
+            with open(f"{MEDIA_FOLDER}/{data['payload']['room']}/{data['payload']['file_name']}", f'{option}b') as received_file:
+                chunk = client_socket.recv(data['payload']['file_size'])
+                received_file.write(chunk)
+
+            notification_message = {
+                                    "type": "notification",
+                                    "payload": {
+                                        "message": f"{data['payload']['name']} uploaded the {data['payload']['file_name']} file.\n"
+                                    }
+                                }
+            server_data = json.dumps(notification_message)
+            send_broadcast_message(client_socket, clients, rooms, bytes(server_data, encoding='utf-8'))
         elif data['type'] == 'message':
             send_broadcast_message(client_socket, clients, rooms, message.encode('utf-8'))
         else:
             print(f'\nInvalid client message received: {data}')
-
-    notification_message = {
-                            "type": "notification",
-                            "payload": {
-                                "message": f"\n{data['payload']['name']} left the room."
-                            }
-                        }
-    server_data = json.dumps(notification_message)
-    send_broadcast_message(client_socket, clients, rooms, bytes(server_data, encoding='utf-8'))
-    
-    clients.remove(client_socket)
-
-    for room in rooms:
-        if client_socket in rooms[room]:
-            rooms[room].remove(client_socket)
-            break
-
-    client_socket.close()
 
 
 def send_broadcast_message(client_socket, clients, rooms, data):
