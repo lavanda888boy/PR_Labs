@@ -92,9 +92,17 @@ def main():
                 client_socket.sendall(bytes(data, encoding='utf-8'))
                 time.sleep(0.1)
 
-                with open(file_path, 'rb') as file:
-                    chunk = file.read(CHUNK)
-                    client_socket.sendall(chunk)
+                if file_size > CHUNK:
+                    with open(file_path, 'rb') as file:
+                        while True:
+                            chunk = file.read(CHUNK)
+                            if not chunk:
+                                break
+                            client_socket.sendall(chunk)
+                else:
+                    with open(file_path, 'rb') as file:
+                        chunk = file.read(file_size)
+                        client_socket.sendall(chunk)
             else:
                 print(f'File {file_name} does not exist!')
                 

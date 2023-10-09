@@ -86,9 +86,17 @@ def handle_client(client_socket, client_address, clients, rooms):
             if not os.path.exists(f"{MEDIA_FOLDER}/{data['payload']['room']}/{data['payload']['file_name']}"):
                 option = 'x'
 
-            with open(f"{MEDIA_FOLDER}/{data['payload']['room']}/{data['payload']['file_name']}", f'{option}b') as received_file:
-                chunk = client_socket.recv(data['payload']['file_size'])
-                received_file.write(chunk)
+            if data['payload']['file_size'] > CHUNK:
+                with open(f"{MEDIA_FOLDER}/{data['payload']['room']}/{data['payload']['file_name']}", f'{option}b') as received_file:
+                    while True:
+                        chunk = client_socket.recv(CHUNK)
+                        if not chunk:
+                            break
+                        received_file.write(chunk)
+            else:
+                with open(f"{MEDIA_FOLDER}/{data['payload']['room']}/{data['payload']['file_name']}", f'{option}b') as received_file:
+                    chunk = client_socket.recv(data['payload']['file_size'])
+                    received_file.write(chunk)
 
             notification_message = {
                                     "type": "notification",
