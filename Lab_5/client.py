@@ -3,7 +3,7 @@ import threading
 import json
 import re
 import os
-import time
+import sys
 
 HOST = '127.0.0.1' 
 PORT = 8080
@@ -49,15 +49,47 @@ def receive_messages():
             print(f'\nInvalid message received: {data}')
 
 
+def upload_file(message, name, room):
+    file_path = message.split(r' ')[1]
+    tokens = file_path.split(r'/')
+    file_name = tokens[len(tokens) - 1]
+    
+    if os.path.exists(file_path):
+        file_size = os.path.getsize(file_path)
+        file_upload_message = {
+                            "type": "upload",
+                            "payload": {
+                                "file_name": file_name,
+                                "file_size": file_size,
+                                "name": name,
+                                "room": room
+                            }
+                        }
+        data = json.dumps(file_upload_message) 
+        client_socket.sendall(bytes(data, encoding='utf-8'))
+
+        if file_size > CHUNK:
+            with open(file_path, 'rb') as file:
+                while True:
+                    chunk = file.read(CHUNK)
+                    if not chunk:
+                        break
+                    client_socket.sendall(chunk)
+        else:
+            with open(file_path, 'rb') as file:
+                chunk = file.read(file_size)
+                client_socket.sendall(chunk)
+    else:
+        print(f'File {file_name} does not exist!')
+
+
 def main():
     name, room = perform_server_connection()
 
     receive_thread = threading.Thread(target=receive_messages)
     receive_thread.daemon = True
     receive_thread.start()
-
-    data = None
-
+    
     while True:
         message = input()
         if message.lower() == 'exit':
@@ -73,41 +105,12 @@ def main():
             break
 
         if re.match(r'upload ([A-Za-z\./]+)', message):
-            file_path = message.split(r' ')[1]
-            tokens = file_path.split(r'/')
-            file_name = tokens[len(tokens) - 1]
-            
-            if os.path.exists(file_path):
-                file_size = os.path.getsize(file_path)
-                file_upload_message = {
-                                    "type": "upload",
-                                    "payload": {
-                                        "file_name": file_name,
-                                        "file_size": file_size,
-                                        "name": name,
-                                        "room": room
-                                    }
-                                }
-                data = json.dumps(file_upload_message) 
-                client_socket.sendall(bytes(data, encoding='utf-8'))
-                time.sleep(0.1)
-
-                if file_size > CHUNK:
-                    with open(file_path, 'rb') as file:
-                        while True:
-                            chunk = file.read(CHUNK)
-                            if not chunk:
-                                break
-                            client_socket.sendall(chunk)
-                else:
-                    with open(file_path, 'rb') as file:
-                        chunk = file.read(file_size)
-                        client_socket.sendall(chunk)
-            else:
-                print(f'File {file_name} does not exist!')
-                
-        elif re.match(r'download (\w+)', message):
-            pass
+            upload_thread = threading.Thread(target=upload_file, args=(message, name, room))   
+            upload_thread.start() 
+            upload_thread.join()
+        elif re.match(r'download ([A-Za-z\.]+)', message):
+            file_name = message.split(r' ')[1]
+            print(file_name)
         else:
             chat_message = {
                             "type": "message",
