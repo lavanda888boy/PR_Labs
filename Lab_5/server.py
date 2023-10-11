@@ -2,7 +2,6 @@ import socket
 import threading
 import json
 import os
-import time
 
 HOST = '127.0.0.1' 
 PORT = 8080
@@ -80,6 +79,12 @@ def handle_client(client_socket, client_address, clients, rooms):
             upload_thread = threading.Thread(target=upload_file, args=(client_socket, data, clients, rooms))
             upload_thread.start()
             upload_thread.join()
+
+        elif data['type'] == 'download':
+            stream_thread = threading.Thread(target=stream_file, args=(client_socket, data))
+            stream_thread.start()
+            stream_thread.join()
+
         elif data['type'] == 'message':
             send_broadcast_message(client_socket, clients, rooms, message.encode('utf-8'))
         else:
@@ -126,6 +131,43 @@ def upload_file(client_socket, data, clients, rooms):
 
     server_data = json.dumps(upload_message)
     client_socket.sendall(bytes(server_data, encoding='utf-8'))
+
+
+def stream_file(client_socket, data):
+    file_path = f"{MEDIA_FOLDER}/{data['payload']['room']}/{data['payload']['file_name']}"
+    if os.path.exists(file_path):
+        file_size = os.path.getsize(file_path)
+
+        stream_message = {
+                        "type": "download-ack",
+                        "payload": {
+                            "file_name": data['payload']['file_name'],
+                            "file_size": file_size
+                        }
+                    }
+        server_data = json.dumps(stream_message)
+        client_socket.sendall(bytes(server_data, encoding='utf-8'))
+
+        if file_size > CHUNK:
+            with open(file_path, 'rb') as file:
+                while True:
+                    chunk = file.read(CHUNK)
+                    if not chunk:
+                        break
+                    client_socket.sendall(chunk)
+        else:
+            with open(file_path, 'rb') as file:
+                chunk = file.read(file_size)
+                client_socket.sendall(chunk)
+    else:
+        notification_message = {
+                                "type": "notification",
+                                "payload": {
+                                    "message": f"The file {data['payload']['file_name']} does not exist.\n"
+                                }
+                            }
+        server_data = json.dumps(notification_message)
+        client_socket.sendall(bytes(server_data, encoding='utf-8'))
 
 
 def send_broadcast_message(client_socket, clients, rooms, data):

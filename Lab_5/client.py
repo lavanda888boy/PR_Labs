@@ -3,11 +3,12 @@ import threading
 import json
 import re
 import os
-import sys
+import shutil
 
 HOST = '127.0.0.1' 
 PORT = 8080
 CHUNK = 1024
+MEDIA_FOLDER = 'client_media'
 
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -34,7 +35,7 @@ def perform_server_connection():
     return name, room
 
 
-def receive_messages():
+def receive_messages(name):
     while True:
         server_message = client_socket.recv(1024).decode('utf-8')
         if not server_message:
@@ -43,6 +44,11 @@ def receive_messages():
         data = json.loads(server_message)
         if (data['type'] == 'connect_ack') or (data['type'] == 'notification'):
             print(data['payload']['message'])
+        elif data['type'] == 'download-ack':
+            download_thread = threading.Thread(target=download_file, args=(client_socket, data, name))
+            download_thread.start()
+            download_thread.join()
+            
         elif data['type'] == 'message':
             print(f"\nRoom: {data['payload']['room']}, {data['payload']['sender']}: {data['payload']['text']}")
         else:
@@ -83,10 +89,35 @@ def upload_file(message, name, room):
         print(f'File {file_name} does not exist!')
 
 
+def download_file(client_socket, data, name):
+    option = 'w'
+    if not os.path.exists(f"{MEDIA_FOLDER}/{name}/{data['payload']['file_name']}"):
+        option = 'x'
+
+    if data['payload']['file_size'] > CHUNK:
+        with open(f"{MEDIA_FOLDER}/{name}/{data['payload']['file_name']}", f'{option}b') as received_file:
+            index = 0
+            while index < data['payload']['file_size']:
+                chunk = client_socket.recv(CHUNK)
+                received_file.write(chunk)
+                index += CHUNK
+    else:
+        with open(f"{MEDIA_FOLDER}/{name}/{data['payload']['file_name']}", f'{option}b') as received_file:
+            chunk = client_socket.recv(data['payload']['file_size'])
+            received_file.write(chunk)
+
+    print('File was downloaded succesfully')
+
+
 def main():
     name, room = perform_server_connection()
 
-    receive_thread = threading.Thread(target=receive_messages)
+    if not os.path.isdir(MEDIA_FOLDER):
+        os.mkdir(MEDIA_FOLDER)
+    if not os.path.isdir(f"{MEDIA_FOLDER}/{name}"):
+        os.mkdir(f"{MEDIA_FOLDER}/{name}")
+
+    receive_thread = threading.Thread(target=receive_messages, args=(name,))
     receive_thread.daemon = True
     receive_thread.start()
     
@@ -109,21 +140,30 @@ def main():
             upload_thread.start() 
             upload_thread.join()
         elif re.match(r'download ([A-Za-z\.]+)', message):
-            file_name = message.split(r' ')[1]
-            print(file_name)
+            file_download_message = {
+                            "type": "download",
+                            "payload": {
+                                "file_name": message.split(r' ')[1],
+                                "name": name,
+                                "room": room
+                            }
+                        }
+            data = json.dumps(file_download_message)
+            client_socket.sendall(bytes(data, encoding='utf-8'))
         else:
             chat_message = {
                             "type": "message",
                             "payload": {
                                 "sender": name,
                                 "room": room,
-                                "text": message
+                                "text": f'{message}\n'
                             }
                         }
             
             data = json.dumps(chat_message)
             client_socket.sendall(bytes(data, encoding='utf-8'))
 
+    shutil.rmtree(f'{MEDIA_FOLDER}/{name}')
     client_socket.close()
 
 
