@@ -7,7 +7,7 @@ def create_app():
     app = Flask(__name__)
 
     #app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///scooter_database.db'
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:test123@localhost:5432/scooter_db'
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:test1234@localhost:5432/scooter_db'
 
     db.init_app(app)
     
