@@ -13,7 +13,7 @@ def scanPages(url: str, init_num: int, page_num: int, urls: [], max_num_pages=No
             if page_num == init_num + max_num_pages:
                 return urls
         
-        parser = BeautifulSoup(response.content, features='lxml')
+        parser = BeautifulSoup(response.content, features='html.parser')
         parser.prettify()
 
         advertisements = set()

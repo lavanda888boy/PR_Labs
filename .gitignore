@@ -1,6 +1,10 @@
 __pycache__
 
+Lab_3/crawler_env
+
 Lab_5/client_media
 Lab_5/server_media
 Lab_6/flask_env
 Lab_6/instance
+
+Lab_7/async_env

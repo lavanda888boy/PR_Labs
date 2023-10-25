@@ -7,7 +7,7 @@ def scanAdvertisement(url: str):
     if response.status_code == 200:
         advertisement_data = {}
 
-        parser = BeautifulSoup(response.content, features='lxml')
+        parser = BeautifulSoup(response.content, features='html.parser')
         parser.prettify()
 
         advertisement_data['url'] = url
