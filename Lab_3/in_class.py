@@ -9,16 +9,19 @@ from homework import *
 def scanPages(url: str, init_num: int, page_num: int, urls: [], max_num_pages=None):
     response = requests.get(url)
     if response.status_code == 200:
+        url = re.sub(r'&page=\d+', '', url)
+
         if max_num_pages != None:
             if page_num == init_num + max_num_pages:
                 return urls
         
-        parser = BeautifulSoup(response.content, features='html.parser')
+        parser = BeautifulSoup(response.content, features='lxml')
         parser.prettify()
 
         advertisements = set()
         links = parser.findAll('a', href=True)
-        nextPageUrl = 'https://999.md' + findNextPage(url, links, page_num)
+        nextPageUrl = findNextPage(url, links, page_num)
+        print(nextPageUrl)
 
         if nextPageUrl == '':
             return urls
@@ -38,8 +41,8 @@ def scanPages(url: str, init_num: int, page_num: int, urls: [], max_num_pages=No
 
 def findNextPage(url: str, links, page_num: int):
     for link in links:
-        if re.match(rf"{url}&page={page_num+1}", link['href']):
-            return link['href']
+        if f'page={page_num+1}' in link['href']:
+            return f'{url}&page={page_num+1}'
     return ''
 
 
@@ -57,7 +60,9 @@ def main():
         p_n = 1
         i_n = p_n
        
-    scanPages(site_url, i_n, p_n, list_of_urls, max_num_pages=1)
+    scanPages(site_url, i_n, p_n, list_of_urls, max_num_pages=2)
+    import sys
+    sys.exit()
     
     option = 'x'
     if os.path.exists('Lab_3/apartments.json'):
