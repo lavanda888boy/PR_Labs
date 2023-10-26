@@ -1,9 +1,10 @@
 from bs4 import BeautifulSoup
 import requests
 import re
+import sys
 
 
-def scanPage(url: str, page_num: int, urls: []):
+def scanPage(url: str, page_num: int):
     response = requests.get(url)
     if response.status_code == 200:
         url = re.sub(r'&page=\d+', '', url)
@@ -17,10 +18,11 @@ def scanPage(url: str, page_num: int, urls: []):
         for link in links:
             if re.match(r"/ro/[0-9]+", link['href']) and link['href'] not in advertisements:
                 advertisements.add('https://999.md' + link['href'])
-
-        urls.append(advertisements)
+        urls = list(advertisements)
         nextPageUrl = findNextPage(url, links, page_num)
         urls.append(nextPageUrl)
+        
+        return urls
         
     else:
         print(f"Request failed: {response.status_code}")
