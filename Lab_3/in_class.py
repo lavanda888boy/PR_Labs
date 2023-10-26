@@ -21,7 +21,6 @@ def scanPages(url: str, init_num: int, page_num: int, urls: [], max_num_pages=No
         advertisements = set()
         links = parser.findAll('a', href=True)
         nextPageUrl = findNextPage(url, links, page_num)
-        print(nextPageUrl)
 
         if nextPageUrl == '':
             return urls
@@ -61,8 +60,6 @@ def main():
         i_n = p_n
        
     scanPages(site_url, i_n, p_n, list_of_urls, max_num_pages=2)
-    import sys
-    sys.exit()
     
     option = 'x'
     if os.path.exists('Lab_3/apartments.json'):

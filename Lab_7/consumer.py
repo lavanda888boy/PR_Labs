@@ -12,6 +12,7 @@ def main():
 
     def callback(ch, method, properties, body):
         print(f" [x] Received {body}")
+        
         channel.basic_ack(delivery_tag=method.delivery_tag)
 
     channel.basic_consume(queue=QUEUE, on_message_callback=callback)

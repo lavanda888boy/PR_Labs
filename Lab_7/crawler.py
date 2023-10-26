@@ -3,34 +3,24 @@ import requests
 import re
 
 
-def scanPages(url: str, init_num: int, page_num: int, urls: [], max_num_pages=None):
+def scanPage(url: str, page_num: int, urls: []):
     response = requests.get(url)
     if response.status_code == 200:
         url = re.sub(r'&page=\d+', '', url)
-
-        if max_num_pages != None:
-            if page_num == init_num + max_num_pages:
-                return urls
         
         parser = BeautifulSoup(response.content, features='lxml')
         parser.prettify()
 
         advertisements = set()
         links = parser.findAll('a', href=True)
-        nextPageUrl = findNextPage(url, links, page_num)
-        print(nextPageUrl)
-
-        if nextPageUrl == '':
-            return urls
         
         for link in links:
             if re.match(r"/ro/[0-9]+", link['href']) and link['href'] not in advertisements:
                 advertisements.add('https://999.md' + link['href'])
 
         urls.append(advertisements)
-        page_num += 1
-
-        scanPages(nextPageUrl, init_num, page_num, urls, max_num_pages)
+        nextPageUrl = findNextPage(url, links, page_num)
+        urls.append(nextPageUrl)
         
     else:
         print(f"Request failed: {response.status_code}")
