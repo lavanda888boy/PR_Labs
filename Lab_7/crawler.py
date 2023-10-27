@@ -1,10 +1,13 @@
 from bs4 import BeautifulSoup
 import requests
 import re
-import sys
 
 
-def scanPage(url: str, page_num: int):
+def scanPage(url: str, page_counter: int, page_num: int, max_num_pages: None):
+    if max_num_pages is not None:
+        if page_counter == max_num_pages:
+            return -1, None
+
     response = requests.get(url)
     if response.status_code == 200:
         url = re.sub(r'&page=\d+', '', url)
@@ -18,11 +21,14 @@ def scanPage(url: str, page_num: int):
         for link in links:
             if re.match(r"/ro/[0-9]+", link['href']) and link['href'] not in advertisements:
                 advertisements.add('https://999.md' + link['href'])
+
         urls = list(advertisements)
         nextPageUrl = findNextPage(url, links, page_num)
         urls.append(nextPageUrl)
+
+        page_counter += 1
         
-        return urls
+        return page_counter, urls
         
     else:
         print(f"Request failed: {response.status_code}")
