@@ -3,7 +3,7 @@ import requests
 import re
 
 
-def scanPage(url: str, page_counter: int, page_num: int, max_num_pages: None):
+def scanPage(url: str, page_counter: int, page_num: int, max_num_pages=None):
     if max_num_pages is not None:
         if page_counter == max_num_pages:
             return -1, None

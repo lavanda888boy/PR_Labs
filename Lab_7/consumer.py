@@ -37,10 +37,10 @@ def main():
                 apart_json = scanAdvertisement(body)
                 
                 option = 'x'
-                if os.path.exists('apartments.json'):
+                if os.path.exists('apartments.txt'):
                     option = 'a'
 
-                with open('apartments.json', option) as apart:
+                with open('apartments.txt', option) as apart:
                     apart.write(json.dumps(apart_json, ensure_ascii=False, indent=4))
                     apart.write(',\n')
                 
@@ -55,7 +55,7 @@ def main():
                     else:
                         p_n = 1
 
-                    page_counter, list_of_urls = scanPage(body, page_counter, p_n, max_num_pages)
+                    page_counter, list_of_urls = scanPage(body, page_counter, p_n)
 
                     if page_counter == -1:
                         print('Crawling terminated')
