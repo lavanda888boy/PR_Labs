@@ -1,96 +1,85 @@
 import pika, sys, os, json
 from crawler import *
 
-QUEUE = 'crawl'
+class Consumer:
 
-def main():
-    connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
-    channel = connection.channel()
+    def __init__(self, name: str, queue: str, max_num_pages=None):
+        self.name = name
+        self.queue = queue
+        self.max_num_pages = max_num_pages
+        self.page_counter = 0
 
-    channel.queue_declare(queue=QUEUE)
+    def main(self):
+        connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+        channel = connection.channel()
 
-    global page_counter
-    page_counter = 0
-    max_num_pages = 2
+        channel.queue_declare(queue=self.queue)
 
-    processed_urls = set()
+        processed_urls = set()
 
-    def callback(ch, method, properties, body):
-        global page_counter
+        def callback(ch, method, properties, body):
+            print(f'{self.name}: Received body: {body}')
+            body = body.decode('utf-8')
 
-        print(f" [x] Received {body}")
-        body = body.decode('utf-8')
+            if body not in processed_urls:
+                processed_urls.add(body)
 
-        if body not in processed_urls:
-            processed_urls.add(body)
+                if body == 'terminate':
+                    print(f'{self.name}: Crawling terminated')
+                    channel.basic_publish(exchange='',
+                            routing_key=self.queue,
+                            body='terminate'
+                            )
+                    print(f'{self.name}: Sent termination signal further')
+                    sys.exit()
 
-            if body == 'terminate':
-                print('Crawling terminated')
-                channel.basic_publish(exchange='',
-                        routing_key=QUEUE,
-                        body='terminate'
-                        )
-                print('Sent termination signal further')
-                sys.exit()
+                if re.match(r"https://999.md/ro/[0-9]+", body):
+                    apart_json = scanAdvertisement(body)
+                    
+                    option = 'x'
+                    if os.path.exists('apartments.txt'):
+                        option = 'a'
 
-            if re.match(r"https://999.md/ro/[0-9]+", body):
-                apart_json = scanAdvertisement(body)
-                
-                option = 'x'
-                if os.path.exists('apartments.txt'):
-                    option = 'a'
-
-                with open('apartments.txt', option) as apart:
-                    apart.write(json.dumps(apart_json, ensure_ascii=False, indent=4))
-                    apart.write(',\n')
-                
-            else:
-                if body == '':
-                    print('Crawling terminated')
+                    with open('apartments.txt', option) as apart:
+                        apart.write(json.dumps(apart_json, ensure_ascii=False, indent=4))
+                        apart.write(',\n')
+                    
                 else:
-                    p_n = 0
-                    if 'page' in body:
-                        p = re.split(r"&(page=[0-9]+)", body)[1]
-                        p_n = int(re.split(r"=", p)[1])
+                    if body == '':
+                        print(f'{self.name}: Crawling terminated')
                     else:
-                        p_n = 1
+                        p_n = 0
+                        if 'page' in body:
+                            p = re.split(r"&(page=[0-9]+)", body)[1]
+                            p_n = int(re.split(r"=", p)[1])
+                        else:
+                            p_n = 1
 
-                    page_counter, list_of_urls = scanPage(body, page_counter, p_n)
+                        self.page_counter, list_of_urls = scanPage(body, self.page_counter, p_n)
 
-                    if page_counter == -1:
-                        print('Crawling terminated')
-                        channel.basic_publish(exchange='',
-                                routing_key=QUEUE,
-                                body='terminate'
-                                )   
-                        print('Sent termination signal further')
-                        sys.exit()
+                        if self.page_counter == -1:
+                            print(f'{self.name}: Crawling terminated')
+                            channel.basic_publish(exchange='',
+                                    routing_key=self.QUEUE,
+                                    body='terminate'
+                                    )   
+                            print(f'{self.name}: Sent termination signal further')
+                            sys.exit()
 
-                    for url in list_of_urls:
-                        channel.basic_publish(exchange='',
-                        routing_key=QUEUE,
-                        body=url
-                        )
-                        print(f'Published url: {url}')
+                        for url in list_of_urls:
+                            channel.basic_publish(exchange='',
+                            routing_key=self.queue,
+                            body=url
+                            )
+                            print(f'{self.name}: Published url: {url}')
+                
+                channel.basic_ack(delivery_tag=method.delivery_tag)
             
-            channel.basic_ack(delivery_tag=method.delivery_tag)
-        
-        else:
-            print(f'Url {body} is skipped')
+            else:
+                print(f'{self.name}: Url {body} is skipped')
 
-    channel.basic_consume(queue=QUEUE, on_message_callback=callback)
-    channel.basic_qos(prefetch_count=1)
+        channel.basic_consume(queue=self.queue, on_message_callback=callback)
+        channel.basic_qos(prefetch_count=1)
 
-    print(' [*] Waiting for messages. To exit press CTRL+C')
-    channel.start_consuming()
-
-
-if __name__ == '__main__':
-    try:
-        main()
-    except KeyboardInterrupt:
-        print('Consumer interrupted')
-        try:
-            sys.exit(0)
-        except SystemExit:
-            os._exit(0)
+        print(f'{self.name}: Waiting for messages')
+        channel.start_consuming()
