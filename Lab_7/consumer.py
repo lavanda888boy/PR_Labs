@@ -1,19 +1,27 @@
-import pika, sys, os, json
+import pika, sys, re
+from tinydb import TinyDB
+
 from crawler import *
 
 class Consumer:
 
-    def __init__(self, name: str, queue: str, max_num_pages=None):
+    def __init__(self, name: str, queue: str, db_name: str, shared_lock, table_name: str, max_num_pages=None):
         self.name = name
         self.queue = queue
+        
+        self.db_name = db_name
+        self.db_lock = shared_lock
+        self.table_name = table_name
+        
         self.max_num_pages = max_num_pages
         self.page_counter = 0
+
 
     def main(self):
         connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
         channel = connection.channel()
 
-        channel.queue_declare(queue=self.queue)
+        channel.queue_declare(queue=self.queue, durable=False)
 
         processed_urls = set()
 
@@ -35,14 +43,12 @@ class Consumer:
 
                 if re.match(r"https://999.md/ro/[0-9]+", body):
                     apart_json = scanAdvertisement(body)
-                    
-                    option = 'x'
-                    if os.path.exists('apartments.txt'):
-                        option = 'a'
 
-                    with open('apartments.txt', option) as apart:
-                        apart.write(json.dumps(apart_json, ensure_ascii=False, indent=4))
-                        apart.write(',\n')
+                    with self.db_lock:
+                        db = TinyDB(self.db_name, indent=4)
+                        table = db.table(self.table_name)
+                        table.insert(apart_json)
+                        db.close()
                     
                 else:
                     if body == '':
@@ -55,7 +61,7 @@ class Consumer:
                         else:
                             p_n = 1
 
-                        self.page_counter, list_of_urls = scanPage(body, self.page_counter, p_n)
+                        self.page_counter, list_of_urls = scanPage(body, self.page_counter, p_n, self.max_num_pages)
 
                         if self.page_counter == -1:
                             print(f'{self.name}: Crawling terminated')
