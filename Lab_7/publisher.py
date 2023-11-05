@@ -1,6 +1,6 @@
 import pika
 import os
-from multiprocessing import Pool, Manager
+from multiprocessing import Pool, Manager, Barrier
 
 from consumer import Consumer
 
@@ -16,7 +16,7 @@ def main():
 
     QUEUE = 'crawl'
     NUMBER_OF_CONSUMERS = 4
-    MAX_NUM_PAGES = 2
+    MAX_NUM_PAGES = 1
     pool = Pool(processes=NUMBER_OF_CONSUMERS)
     consumers = []
 
@@ -40,7 +40,8 @@ def main():
 
     manager = Manager()
     shared_lock = manager.Lock()
-    for i in range(0, NUMBER_OF_CONSUMERS):
+
+    for i in range(NUMBER_OF_CONSUMERS):
         worker = Consumer(f'C{i}', QUEUE, DB_NAME, shared_lock, TABLE_NAME, MAX_NUM_PAGES)
         consumers.append(worker)
 

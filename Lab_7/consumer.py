@@ -39,7 +39,8 @@ class Consumer:
                             body='terminate'
                             )
                     print(f'{self.name}: Sent termination signal further')
-                    sys.exit()
+                    channel.basic_ack(delivery_tag=method.delivery_tag)
+                    sys.exit(0)
 
                 if re.match(r"https://999.md/ro/[0-9]+", body):
                     apart_json = scanAdvertisement(body)
@@ -53,6 +54,13 @@ class Consumer:
                 else:
                     if body == '':
                         print(f'{self.name}: Crawling terminated')
+                        channel.basic_publish(exchange='',
+                                routing_key=self.queue,
+                                body='terminate'
+                                )   
+                        print(f'{self.name}: Sent termination signal further')
+                        sys.exit(0)
+                    
                     else:
                         p_n = 0
                         if 'page' in body:
@@ -66,11 +74,12 @@ class Consumer:
                         if self.page_counter == -1:
                             print(f'{self.name}: Crawling terminated')
                             channel.basic_publish(exchange='',
-                                    routing_key=self.QUEUE,
+                                    routing_key=self.queue,
                                     body='terminate'
                                     )   
                             print(f'{self.name}: Sent termination signal further')
-                            sys.exit()
+                            channel.basic_ack(delivery_tag=method.delivery_tag)
+                            sys.exit(0)
 
                         for url in list_of_urls:
                             channel.basic_publish(exchange='',
