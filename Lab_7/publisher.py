@@ -1,6 +1,7 @@
 import pika
 import os
-from multiprocessing import Pool, Manager, Barrier
+import re
+from multiprocessing import Pool, Manager
 
 from consumer import Consumer
 
@@ -28,6 +29,14 @@ def main():
     channel.queue_declare(queue=QUEUE, durable=False)
 
     site_url = 'https://999.md/ro/list/real-estate/apartments-and-rooms?applied=1&eo=12900&eo=12912&eo=12885&eo=13859&ef=32&ef=33&o_33_1=776&page=10'
+
+    init_page = 0
+    if 'page' in site_url:
+        p = re.split(r"&(page=[0-9]+)", site_url)[1]
+        init_page = int(re.split(r"=", p)[1])
+    else:
+        init_page = 1
+
     channel.basic_publish(exchange='',
                         routing_key=QUEUE,
                         body=site_url,
@@ -42,7 +51,7 @@ def main():
     shared_lock = manager.Lock()
 
     for i in range(NUMBER_OF_CONSUMERS):
-        worker = Consumer(f'C{i}', QUEUE, DB_NAME, shared_lock, TABLE_NAME, MAX_NUM_PAGES)
+        worker = Consumer(f'C{i}', QUEUE, DB_NAME, shared_lock, TABLE_NAME, init_page + MAX_NUM_PAGES)
         consumers.append(worker)
 
     pool.map(run_consumer, consumers)

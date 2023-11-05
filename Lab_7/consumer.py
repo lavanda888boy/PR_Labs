@@ -5,7 +5,7 @@ from crawler import *
 
 class Consumer:
 
-    def __init__(self, name: str, queue: str, db_name: str, shared_lock, table_name: str, max_num_pages=None):
+    def __init__(self, name: str, queue: str, db_name: str, shared_lock, table_name: str, final_page=None):
         self.name = name
         self.queue = queue
         
@@ -13,8 +13,7 @@ class Consumer:
         self.db_lock = shared_lock
         self.table_name = table_name
         
-        self.max_num_pages = max_num_pages
-        self.page_counter = 0
+        self.final_page = final_page
 
 
     def main(self):
@@ -69,9 +68,9 @@ class Consumer:
                         else:
                             p_n = 1
 
-                        self.page_counter, list_of_urls = scanPage(body, self.page_counter, p_n, self.max_num_pages)
+                        marker, list_of_urls = scanPage(body, p_n, self.final_page)
 
-                        if self.page_counter == -1:
+                        if marker == -1:
                             print(f'{self.name}: Crawling terminated')
                             channel.basic_publish(exchange='',
                                     routing_key=self.queue,

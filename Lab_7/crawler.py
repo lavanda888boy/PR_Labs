@@ -3,9 +3,9 @@ import requests
 import re
 
 
-def scanPage(url: str, page_counter: int, page_num: int, max_num_pages=None):
-    if max_num_pages is not None:
-        if page_counter == max_num_pages:
+def scanPage(url: str, page_num: int, final_page=None):
+    if final_page is not None:
+        if page_num == final_page:
             return -1, None
 
     response = requests.get(url)
@@ -25,10 +25,8 @@ def scanPage(url: str, page_counter: int, page_num: int, max_num_pages=None):
         urls = list(advertisements)
         nextPageUrl = findNextPage(url, links, page_num)
         urls.append(nextPageUrl)
-
-        page_counter += 1
         
-        return page_counter, urls
+        return 0, urls
         
     else:
         print(f"Request failed: {response.status_code}")
