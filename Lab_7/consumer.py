@@ -39,7 +39,8 @@ class Consumer:
                             )
                     print(f'{self.name}: Sent termination signal further')
                     channel.basic_ack(delivery_tag=method.delivery_tag)
-                    sys.exit(0)
+                    channel.stop_consuming()
+                    return
 
                 if re.match(r"https://999.md/ro/[0-9]+", body):
                     apart_json = scanAdvertisement(body)
@@ -58,7 +59,8 @@ class Consumer:
                                 body='terminate'
                                 )   
                         print(f'{self.name}: Sent termination signal further')
-                        sys.exit(0)
+                        channel.stop_consuming()
+                        return
                     
                     else:
                         p_n = 0
@@ -78,7 +80,8 @@ class Consumer:
                                     )   
                             print(f'{self.name}: Sent termination signal further')
                             channel.basic_ack(delivery_tag=method.delivery_tag)
-                            sys.exit(0)
+                            channel.stop_consuming()
+                            return
 
                         for url in list_of_urls:
                             channel.basic_publish(exchange='',
