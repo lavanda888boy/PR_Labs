@@ -90,7 +90,10 @@ def findPrice(parser, advertisement_data):
     div = parser.find('div', class_='adPage__content__price-feature')
     header = div.find('div', class_='adPage__content__price-feature__title')
     values = div.findChild('li').findChildren('span')
-    advertisement_data[header.contents[0].strip()[:-1]] = values[0].contents[0].strip() + ' ' + values[1].contents[0].strip()
+    advertisement_data[header.contents[0].strip()[:-1]] = values[0].contents[0].strip()
+
+    if len(values) > 1:
+         advertisement_data[header.contents[0].strip()[:-1]] += ' ' + values[1].contents[0].strip()
 
 
 def findAddress(parser, advertisement_data):
