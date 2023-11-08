@@ -7,6 +7,9 @@ def scanPage(url: str, page_num: int, final_page=None):
     if final_page is not None:
         if page_num == final_page:
             return -1, ['']
+    
+    if url == '':
+        return -1, ['']
 
     response = requests.get(url)
     if response.status_code == 200:

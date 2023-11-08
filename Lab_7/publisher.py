@@ -27,7 +27,7 @@ def main():
 
     channel.queue_declare(queue=QUEUE, durable=False)
 
-    site_url = 'https://999.md/ro/list/real-estate/apartments-and-rooms?applied=1&eo=12900&eo=12912&eo=12885&eo=13859&ef=32&ef=33&o_33_1=776&page=10'
+    site_url = 'https://999.md/ro/list/real-estate/apartments-and-rooms?applied=1&eo=12900&eo=12912&eo=12885&eo=13859&ef=32&ef=33&o_33_1=776&page=204'
 
     init_page = 0
     if 'page' in site_url:
@@ -46,10 +46,11 @@ def main():
         processes.append(process)
         process.start()
 
-    marker, list_of_urls = scanPage(site_url, init_page, init_page + MAX_NUM_PAGES)
+    marker, list_of_urls = scanPage(site_url, init_page)
     copy_init_page = init_page
     
-    while (marker != -1) and (list_of_urls[len(list_of_urls) - 1] != ''):
+    while marker != -1:
+        print(f'Processing page: {copy_init_page}')
         for index in range(len(list_of_urls) - 1):
             channel.basic_publish(exchange='',
                                 routing_key=QUEUE,
@@ -60,7 +61,7 @@ def main():
             print(f'Published url: {list_of_urls[index]}')
         
         copy_init_page += 1
-        marker, list_of_urls = scanPage(list_of_urls[len(list_of_urls) - 1], copy_init_page, init_page + MAX_NUM_PAGES)
+        marker, list_of_urls = scanPage(list_of_urls[len(list_of_urls) - 1], copy_init_page)
 
     for i in range(NUMBER_OF_CONSUMERS):
         channel.basic_publish(exchange='',
