@@ -5,15 +5,13 @@ from crawler import *
 
 class Consumer:
 
-    def __init__(self, name: str, queue: str, db_name: str, shared_lock, table_name: str, final_page=None):
+    def __init__(self, name: str, queue: str, db_name: str, shared_lock, table_name: str):
         self.name = name
         self.queue = queue
         
         self.db_name = db_name
         self.db_lock = shared_lock
         self.table_name = table_name
-        
-        self.final_page = final_page
 
 
     def main(self):
@@ -31,17 +29,6 @@ class Consumer:
             if body not in processed_urls:
                 processed_urls.add(body)
 
-                if body == 'terminate':
-                    print(f'{self.name}: Crawling terminated')
-                    channel.basic_publish(exchange='',
-                            routing_key=self.queue,
-                            body='terminate'
-                            )
-                    print(f'{self.name}: Sent termination signal further')
-                    channel.basic_ack(delivery_tag=method.delivery_tag)
-                    channel.stop_consuming()
-                    return
-
                 if re.match(r"https://999.md/ro/[0-9]+", body):
                     apart_json = scanAdvertisement(body)
 
@@ -51,52 +38,17 @@ class Consumer:
                         table.insert(apart_json)
                         db.close()
                     
-                else:
-                    if body == '':
-                        print(f'{self.name}: Crawling terminated')
-                        channel.basic_publish(exchange='',
-                                routing_key=self.queue,
-                                body='terminate'
-                                )   
-                        print(f'{self.name}: Sent termination signal further')
-                        channel.stop_consuming()
-                        return
-                    
-                    else:
-                        p_n = 0
-                        if 'page' in body:
-                            p = re.split(r"&(page=[0-9]+)", body)[1]
-                            p_n = int(re.split(r"=", p)[1])
-                        else:
-                            p_n = 1
-
-                        marker, list_of_urls = scanPage(body, p_n, self.final_page)
-
-                        if marker == -1:
-                            print(f'{self.name}: Crawling terminated')
-                            channel.basic_publish(exchange='',
-                                    routing_key=self.queue,
-                                    body='terminate'
-                                    )   
-                            print(f'{self.name}: Sent termination signal further')
-                            channel.basic_ack(delivery_tag=method.delivery_tag)
-                            channel.stop_consuming()
-                            return
-
-                        for url in list_of_urls:
-                            channel.basic_publish(exchange='',
-                            routing_key=self.queue,
-                            body=url
-                            )
-                            print(f'{self.name}: Published url: {url}')
+                elif body == 'terminate':
+                    channel.basic_ack(delivery_tag=method.delivery_tag)
+                    channel.stop_consuming()
+                    return
                 
                 channel.basic_ack(delivery_tag=method.delivery_tag)
             
             else:
                 print(f'{self.name}: Url {body} is skipped')
 
+        print(f'{self.name}: Waiting for messages')
         channel.basic_consume(queue=self.queue, on_message_callback=callback)
         channel.basic_qos(prefetch_count=1)
-
-        print(f'{self.name}: Waiting for messages')
         channel.start_consuming()
