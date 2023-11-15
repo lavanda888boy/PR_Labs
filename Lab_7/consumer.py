@@ -1,4 +1,4 @@
-import pika, sys, re
+import pika, re
 from tinydb import TinyDB
 
 from crawler import *
