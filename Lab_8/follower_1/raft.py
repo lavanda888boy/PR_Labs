@@ -1,5 +1,6 @@
 import json
 import socket
+from node import RESTNode
 
 
 class RAFTFactory:
@@ -58,3 +59,10 @@ class RAFTFactory:
             str_dict = json.dumps(msg)
             bytes_to_send = str.encode(str_dict)
             self.udp_socket.sendto(bytes_to_send, (self.udp_host, self.udp_port))
+
+    
+    def create_server(self):
+        if self.role == 'leader':
+            return RESTNode(True,self.followers)
+        else:
+            return RESTNode(False)

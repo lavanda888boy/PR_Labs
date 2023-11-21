@@ -4,7 +4,7 @@ import requests
 
 class RESTNode:
 
-    def __init__(self, leader : bool, followers : dict =None):
+    def __init__(self, leader : bool, followers : list =None):
         self.users = {}
         self.leader = leader
 
@@ -12,7 +12,7 @@ class RESTNode:
             self.followers = followers
 
 
-    def create(self, user_dict : dict):.
+    def create(self, user_dict : dict):
         if self.leader:
             index = str(uuid.uuid4())
             user_dict["id"] = index
