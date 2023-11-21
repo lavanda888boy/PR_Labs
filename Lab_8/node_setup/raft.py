@@ -1,6 +1,6 @@
 import json
 import socket
-from node import RESTNode
+from .node import RESTNode
 
 
 class RAFTFactory:
