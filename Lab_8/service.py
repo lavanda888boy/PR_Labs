@@ -1,4 +1,4 @@
-from node_setup.node import RESTNode
+from node_setup.raft import RAFTFactory
 from models.scooter import ElectroScooter
 from models.database import db
 
@@ -14,13 +14,12 @@ service_info = {
 }
 
 time.sleep(random.randint(1, 3))
-# node = RAFTFactory(service_info).create_server()
-node = RESTNode(False)
+node = RAFTFactory(service_info).create_server()
 node.to_string()
 
 db_name = 'scooter'
-# if not node.leader:
-#     db_name += str(random.randint(1, 3))
+if not node.leader:
+    db_name += str(random.randint(1, 3))
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_name}.db'
@@ -139,8 +138,7 @@ def delete_electro_scooter(scooter_id):
                     if node.leader:
                         for follower in node.followers:
                             requests.delete(f"http://{follower['host']}:{follower['port']}/electro-scooters",
-                                            json = request.json,
-                                            headers = {"Token" : "Leader"})
+                                            headers = {"Token" : "Leader", "Delete-Password" : "confirm_deletion"})
 
                     return jsonify({"message": "Electro Scooter deleted successfully"}), 200
                 else:
