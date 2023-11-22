@@ -63,6 +63,6 @@ class RAFTFactory:
     
     def create_server(self):
         if self.role == 'leader':
-            return RESTNode(True,self.followers)
+            return RESTNode(True, self.followers)
         else:
             return RESTNode(False)
