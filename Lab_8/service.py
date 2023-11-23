@@ -19,7 +19,7 @@ node.to_string()
 
 db_name = 'scooter'
 if not node.leader:
-    db_name += str(random.randint(1, 3))
+    db_name += str(service_info["port"])
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_name}.db'
