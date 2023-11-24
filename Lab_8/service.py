@@ -107,7 +107,7 @@ def update_electro_scooter(scooter_id):
 
                 if node.leader:
                     for follower in node.followers:
-                        requests.put(f"http://{follower['host']}:{follower['port']}/electro-scooters",
+                        requests.put(f"http://{follower['host']}:{follower['port']}/electro-scooters/{scooter_id}",
                                         json = request.json,
                                         headers = {"Token" : "Leader"})
 
@@ -137,7 +137,7 @@ def delete_electro_scooter(scooter_id):
 
                     if node.leader:
                         for follower in node.followers:
-                            requests.delete(f"http://{follower['host']}:{follower['port']}/electro-scooters",
+                            requests.delete(f"http://{follower['host']}:{follower['port']}/electro-scooters/{scooter_id}",
                                             headers = {"Token" : "Leader", "Delete-Password" : "confirm_deletion"})
 
                     return jsonify({"message": "Electro Scooter deleted successfully"}), 200
