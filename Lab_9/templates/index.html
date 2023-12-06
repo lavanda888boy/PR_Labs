@@ -4,23 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Email Form with File Upload</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
-<body>
-    <h1>Email Form with File Upload</h1>
-    <form action="/upload" method="post" enctype="multipart/form-data">
+<body class="email-page-wrapper">
+    <h1 class="email-form-header">Email Form with File Upload</h1>
+    <form class="email-form" action="/send" method="post" enctype="multipart/form-data">
         <label for="recipient_email">Recipient's Email:</label>
         <input type="email" name="recipient_email" id="recipient_email" required>
         <br>
         <label for="email_subject">Subject:</label>
-        <input type="text" name="email_subject" id="email_subject" required>
+        <input type="text" name="email_subject" id="email_subject">
         <br>
         <label for="email_body">Body:</label>
         <textarea name="email_body" id="email_body" rows="4" required></textarea>
         <br>
         <label for="file">Choose a file:</label>
-        <input type="file" name="file" id="file" required>
+        <input class="email-file" type="file" name="file" id="file">
         <br>
-        <input type="submit" value="Send Email">
+        <input class="email-submit" type="submit" value="Send Email">
     </form>
 </body>
 </html>

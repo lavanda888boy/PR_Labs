@@ -1,0 +1,33 @@
+.email-page-wrapper {
+    background-color: bisque;
+
+    .email-form-header {
+        text-align: center;
+        color: crimson;
+    }
+
+    .email-form {
+        display: flex;
+        flex-direction: column;
+        padding-left: 40%;
+        padding-right: 40%;
+        font-size: large;
+
+        .email-file {
+            padding-top: 2%;
+            color: crimson;
+        }
+
+        .email-submit {
+            padding-top: 2%;
+            padding-bottom: 2%;
+            margin-top: 5%;
+            margin-left: 10%;
+            margin-right: 10%;
+
+            border-radius: 10px;
+            background-color: crimson;
+            font-size: large;
+        }
+    }
+}
